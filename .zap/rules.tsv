@@ -7,3 +7,6 @@
 10015	IGNORE	Cache-control: set by GitHub's CDN. Informational.
 10050	IGNORE	Retrieved from cache: GitHub's CDN. Informational.
 10036	IGNORE	Server version header: only appears on the throwaway local test server in the full scan, not on GitHub Pages.
+10049	IGNORE	Storable/cacheable content: expected for a public static site; nothing private is served. Accepted, SR-05.
+10063	IGNORE	Permissions-Policy header: GitHub Pages can't set response headers and it can't be set via meta. The site requests no browser features. Accepted, SR-05.
+90004	IGNORE	Cross-Origin-Embedder-Policy (Spectre isolation): GitHub Pages can't set response headers; the site holds no sensitive cross-origin data. Accepted, SR-05.
