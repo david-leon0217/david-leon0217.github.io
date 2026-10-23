@@ -37,7 +37,7 @@ jobs:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Site is up, served over HTTPS with HSTS
         run: |
           code=$(curl -s -o /dev/null -w "%{http_code}" "$SITE/")
@@ -69,7 +69,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || inputs.scan == 'baseline'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: OWASP ZAP baseline scan
         # Spiders the live site and passively analyses every response. No attack traffic,
         # so it's safe to run against GitHub's servers. Fails on any alert not accepted in .zap/rules.tsv.
@@ -77,7 +77,7 @@ jobs:
           chmod -R a+rwX "$GITHUB_WORKSPACE"
           docker run --rm -v "$GITHUB_WORKSPACE:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py -t "$SITE" -c .zap/rules.tsv -r zap-baseline.html -J zap-baseline.json -m 2
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: zap-baseline-report
@@ -90,7 +90,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.scan == 'full'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Serve the site locally inside the runner
         # Active scans send real attack payloads. We aim them at a local copy of the exact
         # same files, never at GitHub's production servers.
@@ -102,7 +102,7 @@ jobs:
           chmod -R a+rwX "$GITHUB_WORKSPACE"
           docker run --rm --network host -v "$GITHUB_WORKSPACE:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
             zap-full-scan.py -t http://127.0.0.1:8080/ -c .zap/rules.tsv -r zap-full.html -J zap-full.json -m 5
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: zap-full-report

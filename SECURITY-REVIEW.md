@@ -58,9 +58,10 @@ This is a static site with **no forms, no login, no backend and no user input fi
 ### SR-04 — No secrets in code · PASS
 gitleaks (working tree and git history) and Semgrep `p/secrets` found no API keys, tokens or passwords. The site uses GitHub's **unauthenticated** public API on purpose, so no token ever needs to exist in browser code.
 
-### SR-05 — Clickjacking protection unavailable on GitHub Pages · ACCEPTED
+### SR-05 — Security headers unavailable on GitHub Pages · ACCEPTED
 - **Severity:** Informational
 - GitHub Pages can't set `X-Frame-Options` or a header-based `frame-ancestors`. The site has no buttons that change state or log in, so there is nothing to trick a visitor into clicking. Risk accepted. Revisit if the site ever moves to a host that allows headers (for example Cloudflare Pages).
+- **Same root cause, found by the first live DAST run in CI (Oct 23, 2026):** `X-Content-Type-Options`, `Permissions-Policy` and `Cross-Origin-Embedder-Policy` are also response headers GitHub Pages won't let site owners set. The site requests no browser features and serves no private data, so the practical risk is negligible. ZAP's live run reported **FAIL: 0, PASS: 58**, with the three new header warnings accepted here.
 
 ### SR-06 — Third-party stylesheet without integrity check · FIXED
 - **Severity:** Medium (ZAP rating) / Low in practice · ZAP alert 90003, Sub Resource Integrity Attribute Missing
@@ -91,6 +92,9 @@ gitleaks (working tree and git history) and Semgrep `p/secrets` found no API key
 | 10098 Cross-domain misconfiguration | Medium | GitHub Pages CORS header | Accepted (SR-09) |
 | 10021 X-Content-Type-Options missing | Low | GitHub Pages headers | Accepted (SR-05) |
 | 10027 Suspicious comments | Info | Teaching comments in code | Accepted (no secrets, per gitleaks) |
+| 10049 Storable and cacheable content | Info | Public static pages | Accepted (SR-05) |
+| 10063 Permissions-Policy header not set | Low | GitHub Pages headers | Accepted (SR-05) |
+| 90004 Cross-Origin-Embedder-Policy missing | Low | GitHub Pages headers | Accepted (SR-05) |
 | 10015 / 10050 Cache notices | Info | GitHub's CDN | Accepted |
 
 The active scan, run against a local copy so no attack traffic hits GitHub's servers, found **no injection, XSS or other exploitable issues**. Every accepted alert is recorded in `.zap/rules.tsv` with its reason. **Any new alert type fails the monitor and triggers an email.**
