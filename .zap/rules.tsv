@@ -1,0 +1,9 @@
+10020	IGNORE	Anti-clickjacking header: GitHub Pages can't set response headers. Accepted, SR-05 (no state-changing actions on the site).
+10021	IGNORE	X-Content-Type-Options: GitHub Pages can't set response headers. Accepted, SR-05.
+10038	IGNORE	CSP header not set: the CSP ships as a <meta> tag (SR-02). The monitor job checks it's present on every run.
+10055	IGNORE	CSP findings: frame-ancestors can't be set in a meta tag (SR-05), and GitHub's own 404 page uses unsafe-inline. The monitor job checks our exact policy instead.
+10098	IGNORE	Access-Control-Allow-Origin: * is set by GitHub Pages on public static files. No private data served. Accepted, SR-09.
+10027	IGNORE	Suspicious comments: the code comments are intentional teaching notes; gitleaks guarantees no secrets in them.
+10015	IGNORE	Cache-control: set by GitHub's CDN. Informational.
+10050	IGNORE	Retrieved from cache: GitHub's CDN. Informational.
+10036	IGNORE	Server version header: only appears on the throwaway local test server in the full scan, not on GitHub Pages.

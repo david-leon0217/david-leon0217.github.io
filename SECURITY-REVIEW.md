@@ -5,8 +5,9 @@
 | **Target** | Personal portfolio site: `index.html`, `style.css`, `script.js`, `resume.pdf` |
 | **Review date** | October 22, 2026 |
 | **Reviewer** | David Leon |
-| **Method** | Static analysis (SAST), secret scanning, manual code review, and a dynamic proof-of-concept test against a local copy |
-| **Result** | 2 findings fixed and verified · 1 open (owner decision) · 4 accepted / informational · 0 secrets found |
+| **Method** | SAST, secret scanning, DAST (OWASP ZAP), manual code review, and a dynamic proof-of-concept test against a local copy |
+| **Result** | 3 findings fixed and verified · 5 accepted (documented below) · 0 secrets found |
+| **Last updated** | October 23, 2026 (DAST added, fonts self-hosted, continuous monitoring enabled) |
 
 ## Attack surface
 
@@ -20,6 +21,7 @@ This is a static site with **no forms, no login, no backend and no user input fi
 | Semgrep custom rules (`.semgrep/rules.yml`) | — | DOM XSS sink patterns the standard rulesets missed | 2 findings → fixed → 0 |
 | [gitleaks](https://github.com/gitleaks/gitleaks) | 8.21.2 | Hard-coded secrets: API keys, tokens, passwords | 0 findings |
 | Playwright + headless Chromium | — | Dynamic test: fed a malicious fake API response to the page | Exploit confirmed before fix, blocked after |
+| [OWASP ZAP](https://www.zaproxy.org) | 2.17.0 | DAST: active + passive scan of a local copy; passive scan of the live site | No exploitable findings; 1 fixed (SR-06), rest are hosting limits |
 | Manual review | — | Privacy, headers, third-party requests | See findings |
 
 **Lesson from this review:** the public rulesets returned zero findings, but manual review found a real, exploitable pattern. Scanners are a floor, not a ceiling. Writing a custom rule (`innerhtml-with-interpolated-data`) turned the manual finding into something the pipeline now catches automatically.
@@ -48,10 +50,10 @@ This is a static site with **no forms, no login, no backend and no user input fi
 - **Verification:** the site loads with zero CSP violations, and fonts and the repo feed still work.
 - **Limitation:** GitHub Pages can't send custom HTTP headers, so the CSP lives in a meta tag. That supports everything above except `frame-ancestors` (see SR-05).
 
-### SR-03 — Personal data in public résumé · OPEN (owner decision)
+### SR-03 — Personal data in public résumé · ACCEPTED (owner decision)
 - **Severity:** Low (privacy)
 - **What:** `resume.pdf` on the public site includes a personal phone number. Phone numbers scraped from public résumés feed spam, phishing, and SIM-swap social engineering.
-- **Recommendation:** publish a web copy of the résumé without the phone number, and give the full version to recruiters directly. PDF metadata was checked and holds no author name or other personal details.
+- **Decision:** kept on purpose so recruiters can call directly. Compensating controls: a carrier account PIN/port-out lock against SIM swaps, and treating unexpected calls asking for codes as phishing. PDF metadata was checked and holds no author name or other personal details.
 
 ### SR-04 — No secrets in code · PASS
 gitleaks (working tree and git history) and Semgrep `p/secrets` found no API keys, tokens or passwords. The site uses GitHub's **unauthenticated** public API on purpose, so no token ever needs to exist in browser code.
@@ -60,9 +62,11 @@ gitleaks (working tree and git history) and Semgrep `p/secrets` found no API key
 - **Severity:** Informational
 - GitHub Pages can't set `X-Frame-Options` or a header-based `frame-ancestors`. The site has no buttons that change state or log in, so there is nothing to trick a visitor into clicking. Risk accepted. Revisit if the site ever moves to a host that allows headers (for example Cloudflare Pages).
 
-### SR-06 — Third-party requests reveal visitor IPs · ACCEPTED
-- **Severity:** Informational (privacy)
-- Google Fonts and the GitHub API both see each visitor's IP address. Subresource Integrity (SRI) can't be used on Google Fonts' CSS because Google changes it per browser. Optional fix: self-host the three fonts.
+### SR-06 — Third-party stylesheet without integrity check · FIXED
+- **Severity:** Medium (ZAP rating) / Low in practice · ZAP alert 90003, Sub Resource Integrity Attribute Missing
+- **What:** the fonts loaded from Google Fonts with no Subresource Integrity hash, and SRI can't be added because Google changes that CSS per browser. If that third party were ever compromised, it could change how the site renders. It also sent every visitor's IP address to Google.
+- **Fix:** the three fonts are now self-hosted in `/fonts` (SIL Open Font License; licenses included). The CSP was tightened to `style-src 'self'; font-src 'self'`, so the browser now refuses fonts and styles from anywhere else.
+- **Verification:** a ZAP re-scan of the new build no longer reports 90003. The only remaining third party is GitHub's API, for the repo feed.
 
 ### SR-07 — Email address published in plain text · ACCEPTED
 - **Severity:** Informational
@@ -72,6 +76,36 @@ gitleaks (working tree and git history) and Semgrep `p/secrets` found no API key
 - **Severity:** Informational (availability)
 - Unauthenticated API calls are limited to 60 per hour per visitor IP. If that limit is hit, the page shows a fallback link to the GitHub profile instead of breaking.
 
+### SR-09 — Wildcard CORS header on static files · ACCEPTED
+- **Severity:** Informational · ZAP alert 10098, Cross-Domain Misconfiguration
+- GitHub Pages sends `Access-Control-Allow-Origin: *` on every file and it can't be changed. The site serves only public, static content with no cookies or private data, so another site reading it gains nothing.
+
+## DAST results (OWASP ZAP 2.17.0)
+
+| Alert | ZAP risk | Where | Status |
+|---|---|---|---|
+| 90003 Sub Resource Integrity missing | Medium | Google Fonts link | **Fixed** (SR-06) |
+| 10020 Missing anti-clickjacking header | Medium | GitHub Pages headers | Accepted (SR-05) |
+| 10055 CSP: no `frame-ancestors`; `unsafe-inline` | Medium | Meta-tag limit; GitHub's own 404 page | Accepted (SR-05) |
+| 10038 CSP header not set | Medium | CSP ships as a meta tag | Accepted (SR-02) |
+| 10098 Cross-domain misconfiguration | Medium | GitHub Pages CORS header | Accepted (SR-09) |
+| 10021 X-Content-Type-Options missing | Low | GitHub Pages headers | Accepted (SR-05) |
+| 10027 Suspicious comments | Info | Teaching comments in code | Accepted (no secrets, per gitleaks) |
+| 10015 / 10050 Cache notices | Info | GitHub's CDN | Accepted |
+
+The active scan, run against a local copy so no attack traffic hits GitHub's servers, found **no injection, XSS or other exploitable issues**. Every accepted alert is recorded in `.zap/rules.tsv` with its reason. **Any new alert type fails the monitor and triggers an email.**
+
+## Continuous monitoring
+
+| When | What runs |
+|---|---|
+| Every push | Secret scan (gitleaks) + SAST (Semgrep). The deploy is blocked unless both pass. |
+| After every deploy | Live checks: uptime, HTTPS/HSTS, CSP in place, live files match the repo byte for byte (catches tampering), then a ZAP baseline scan |
+| Daily, 7:17 AM ET | The same live checks and ZAP baseline, so regressions surface even with no code changes |
+| On demand | ZAP full active scan against a local copy (Actions → Live site monitor → Run workflow → `full`) |
+
+Failures are emailed to the site owner. ZAP reports are saved with every run.
+
 ## How to re-run this review
 
 ```bash
@@ -80,4 +114,4 @@ semgrep scan --config .semgrep/rules.yml --config p/javascript --config p/xss --
 gitleaks detect --source . -v
 ```
 
-These same scans run automatically on every push through `.github/workflows/security.yml`. **The site only deploys if they pass.**
+These same scans run automatically on every push through `.github/workflows/security.yml`, and **the site only deploys if they pass.** DAST and live checks run in `.github/workflows/monitor.yml`.

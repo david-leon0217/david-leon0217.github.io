@@ -1,0 +1,111 @@
+# Live-site monitoring: DAST + integrity checks.
+#
+# Runs automatically:
+#   - right after every successful deploy (so each new version gets tested live)
+#   - every day at 7:17 AM Eastern, even if nothing changed (new scanner rules, CDN or GitHub changes)
+# Run it by hand from the Actions tab, and pick "full" for a deep active scan.
+#
+# If anything fails, GitHub emails you (see the guide, "Get alerts by email").
+# The ZAP report is attached to every run under "Artifacts".
+
+name: Live site monitor (DAST)
+
+on:
+  workflow_run:
+    workflows: ["Security scan and deploy"]
+    types: [completed]
+  schedule:
+    - cron: "17 11 * * *"     # 11:17 UTC = 7:17 AM Eastern (6:17 AM in winter)
+  workflow_dispatch:
+    inputs:
+      scan:
+        description: "baseline = passive scan of the live site; full = active attack scan of a local copy"
+        type: choice
+        options: [baseline, full]
+        default: baseline
+
+permissions:
+  contents: read
+
+env:
+  SITE: https://david-leon0217.github.io
+
+jobs:
+  integrity:
+    name: Uptime and integrity check
+    # After a deploy, only run if the deploy succeeded
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Site is up, served over HTTPS with HSTS
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$SITE/")
+          echo "Status: $code"; test "$code" = "200"
+          curl -sI "$SITE/" | grep -qi '^strict-transport-security:' || { echo "HSTS header missing"; exit 1; }
+          test "$(curl -s -o /dev/null -w "%{http_code}" "$SITE/resume.pdf")" = "200"
+      - name: Live code matches the scanned code in the repo (detects tampering or a stale deploy)
+        run: |
+          # GitHub's CDN can serve the old copy for up to ~10 minutes after a deploy, so retry for a while.
+          for f in index.html script.js style.css; do
+            want=$(sha256sum "$f" | cut -d' ' -f1)
+            for i in $(seq 1 15); do
+              got=$(curl -s "$SITE/$f?check=${GITHUB_RUN_ID}-$i" | sha256sum | cut -d' ' -f1)
+              [ "$got" = "$want" ] && break
+              sleep 40
+            done
+            if [ "$got" != "$want" ]; then echo "MISMATCH: live $f differs from the repo"; exit 1; fi
+            echo "OK: $f matches the repo"
+          done
+      - name: Content Security Policy is still in place
+        run: |
+          curl -s "$SITE/" | grep -q "Content-Security-Policy" || { echo "CSP meta tag missing"; exit 1; }
+          curl -s "$SITE/" | grep -q "default-src 'self'; script-src 'self'" || { echo "CSP policy changed"; exit 1; }
+          echo "CSP present"
+
+  dast-baseline:
+    name: DAST baseline (passive, live site)
+    needs: integrity
+    if: github.event_name != 'workflow_dispatch' || inputs.scan == 'baseline'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OWASP ZAP baseline scan
+        # Spiders the live site and passively analyses every response. No attack traffic,
+        # so it's safe to run against GitHub's servers. Fails on any alert not accepted in .zap/rules.tsv.
+        run: |
+          chmod -R a+rwX "$GITHUB_WORKSPACE"
+          docker run --rm -v "$GITHUB_WORKSPACE:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py -t "$SITE" -c .zap/rules.tsv -r zap-baseline.html -J zap-baseline.json -m 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-baseline-report
+          path: |
+            zap-baseline.html
+            zap-baseline.json
+
+  dast-full:
+    name: DAST full scan (active, local copy)
+    if: github.event_name == 'workflow_dispatch' && inputs.scan == 'full'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Serve the site locally inside the runner
+        # Active scans send real attack payloads. We aim them at a local copy of the exact
+        # same files, never at GitHub's production servers.
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
+          sleep 2 && curl -sf http://127.0.0.1:8080/ >/dev/null
+      - name: OWASP ZAP full (active) scan
+        run: |
+          chmod -R a+rwX "$GITHUB_WORKSPACE"
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-full-scan.py -t http://127.0.0.1:8080/ -c .zap/rules.tsv -r zap-full.html -J zap-full.json -m 5
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: zap-full-report
+          path: |
+            zap-full.html
+            zap-full.json
