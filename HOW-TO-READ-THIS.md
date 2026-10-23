@@ -133,11 +133,15 @@ david-leon0217.github.io/
 ├── resume.pdf
 ├── HOW-TO-READ-THIS.md
 ├── SECURITY-REVIEW.md
+├── fonts/                    ← self-hosted fonts + their licenses
 ├── .semgrep/
 │   └── rules.yml             ← custom SAST rules
+├── .zap/
+│   └── rules.tsv             ← DAST: alerts reviewed and accepted, each with its reason
 └── .github/
     └── workflows/
-        └── security.yml      ← scan-then-deploy pipeline
+        ├── security.yml      ← push: secret scan + SAST, then deploy
+        └── monitor.yml       ← after deploy + daily: live checks + DAST
 ```
 Folders starting with a dot are hidden by default. On Windows, turn on View → Hidden items; on Mac, press Cmd+Shift+. in Finder.
 
@@ -171,3 +175,49 @@ Double-click `index.html` to open it in your browser. For the most accurate prev
 ```bash
 python -m http.server 8000
 ```
+
+
+## 6. Making changes the right way (branch → pull request → merge)
+
+You **can** keep pushing straight to `main`, and every push still gets scanned. But the professional workflow, and the one interviewers expect you to know, uses a branch:
+
+```bash
+git checkout main
+git pull                          # 1. get the latest from GitHub first
+git checkout -b update-bio        # 2. make a branch for this change
+# ...edit files, preview locally...
+git add .
+git commit -m "Update bio and Kokoro section"
+git push -u origin update-bio     # 3. push the branch (this does NOT go live)
+```
+
+4. On GitHub, a yellow banner offers **Compare & pull request**. Click it, then **Create pull request**.
+5. The secret scan and SAST run on the pull request. **Nothing deploys yet.** Green checks mean the change is safe to ship.
+6. Click **Merge pull request**. Merging into `main` triggers scan → deploy → live DAST.
+7. Back on your computer:
+   ```bash
+   git checkout main
+   git pull                        # your local main now matches the live site
+   git branch -d update-bio        # delete the finished branch
+   ```
+
+**The rule of thumb:** your laptop is where you edit, GitHub is the source of truth, and `git pull` before you start keeps the two in sync.
+
+## 7. Get alerts by email
+
+GitHub sends the alerts itself, so no passwords or email credentials ever live in this repo.
+
+1. **GitHub → Settings → Emails**: add `davidalanleon@outlook.com` and click the verification link GitHub sends you.
+2. **GitHub → Settings → Notifications**:
+   - **Default notifications email** → choose `davidalanleon@outlook.com`.
+   - Under **System → Actions**, tick **Email** and **Only notify for failed workflows**.
+3. Done. You'll get an email if:
+   - a push fails the secret scan or SAST (the deploy is blocked),
+   - the live site is down, its files don't match the repo, or its CSP is missing,
+   - ZAP finds a new kind of issue on the live site (daily, and after every deploy).
+
+Quiet inbox = everything passing. Each run's ZAP report is under **Actions → (run) → Artifacts**.
+
+**Deep scan on demand:** Actions → **Live site monitor (DAST)** → **Run workflow** → choose `full`. It runs a real attack scan against a copy of the site inside GitHub's runner, never against the live servers.
+
+**If ZAP flags something:** read the report and fix it, or, if it's a hosting limit you can't change, add a line to `.zap/rules.tsv` with the alert ID, `IGNORE`, and the reason, then log it in `SECURITY-REVIEW.md`. Never ignore an alert without writing down why.

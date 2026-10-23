@@ -24,19 +24,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- SECURITY (SECURITY-REVIEW.md, SR-02): Content Security Policy.
-       The browser will only load scripts from this site, styles from this site + Google Fonts,
-       fonts from Google, and data from GitHub's API. Anything else (an injected script,
+       The browser will only load scripts, styles and fonts from this site,
+       and data from GitHub's API. Anything else (an injected script,
        a rogue stylesheet) gets blocked. If you add a new outside service, add its domain here. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; connect-src https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
   <!-- Don't leak which page a visitor came from when they click out -->
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>David Leon — Network Operations, Incident Response &amp; Cybersecurity</title>
   <meta name="description" content="Portfolio of David Leon: network operations professional moving into cybersecurity. Projects, home labs, and experience.">
 
-  <!-- Fonts from Google: Chakra Petch (headings), IBM Plex Sans (body), IBM Plex Mono (HUD text) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Fonts are self-hosted in /fonts (SECURITY-REVIEW.md, SR-06): no third-party requests,
+       so visitors' IPs aren't shared with Google and nothing outside this site can change them.
+       Chakra Petch (headings), IBM Plex Sans (body), IBM Plex Mono (HUD text). Loaded in style.css. -->
 
   <!-- Our stylesheet: everything about how the page LOOKS lives here -->
   <link rel="stylesheet" href="style.css">
@@ -101,16 +100,23 @@
       <h2 class="section-title"><span class="idx">01</span> About</h2>
       <div class="panel">
         <p>
-          I've spent my career in managed service provider environments, most
-          recently in a 24/7 NOC supporting 50+ enterprise clients. My day-to-day
-          was triaging alerts and taking network incidents from first alert to
-          root cause across Cisco, Fortinet, and Meraki firewalls, VPN tunnels,
-          BGP, and VLANs.
+          Security-focused IT professional with nearly 5 years of MSP experience
+          spanning service desk support, Tier 2 escalations, and 24/7 network
+          operations, holding a B.S. in Cybersecurity and Information Assurance and
+          10 certifications including CySA+, SSCP, PenTest+, and Security+.
+          Experience includes incident triage and root-cause analysis,
+          firewall/access-control management (Cisco, Fortinet, Meraki), and
+          identity/access management (Active Directory, SSO, MFA), sustaining
+          99.9% uptime SLAs and cutting MTTR by 30%. Building toward a security
+          operations role through hands-on certification work and active expansion
+          into Python and AI/LLM security.
         </p>
         <p>
-          I hold a B.S. in Cybersecurity and Information Assurance along with
-          CCNA, Security+, CySA+, PenTest+, and SSCP. I'm now putting that into
-          practice with hands-on security labs, documented below.
+          Five years in IT gave me the fundamentals: how networks, identities, and
+          incidents behave when it matters. Now I'm building the fundamentals of
+          software development and CI/CD (this site ships through a pipeline that
+          security-scans every change before it goes live) so I can spearhead
+          authentication, identity and access management, and security engineering.
         </p>
       </div>
     </section>
@@ -281,13 +287,30 @@
         <p class="gate"><span>END STATE</span> AI security engineering: red-teaming AI systems and securing the agents and infrastructure they run on.</p>
       </div>
 
-      <details class="why-box">
-        <summary>Why this direction</summary>
-        <ul>
-          <li>AI now finds vulnerabilities faster than teams can process them; vulnerability reports are running well above forecast. The bottleneck has moved to people who can verify, chain and fix what AI surfaces (<a href="https://darkreading.com/cybersecurity-operations/ai-decline-confidence-autonomous-penetration-testing" target="_blank" rel="noopener">Dark Reading</a>).</li>
-          <li>AI skills appear in about 28.5% of cybersecurity postings, and hands-on experience with AI agents is the most-cited skills gap among security leaders (<a href="https://siliconangle.com/2026/08/20/ai-skills-in-cybersecurity-job-postings-doubled-as-junior-hiring-stalls/" target="_blank" rel="noopener">AI Workforce Consortium via SiliconANGLE</a>).</li>
-          <li>Attacks on agent tooling are already live, like the August 2026 campaign that slipped poisoned MCP servers into public repositories (<a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-deadbugz-mcp-supply-chain-20260830-csa-sty/" target="_blank" rel="noopener">Cloud Security Alliance</a>).</li>
-        </ul>
+      <!-- The "why": personal story behind the roadmap. Remove <details open> → <details> to collapse it by default. -->
+      <details class="why-box" open>
+        <summary>Why: Operation Kokoro <span lang="ja">心</span></summary>
+        <div class="why-body">
+          <p><span class="why-label">WHERE I COME FROM</span>
+            I grew up in Brentwood, Long Island, in a Colombian-American family, raised by my
+            mother and working from my teens to help at home. No one handed me a roadmap into
+            tech; I worked my way in from the service desk.</p>
+          <p>Living in Colombia, I tried to help wherever I could, and I saw how often the people
+            and systems at the top take without trying to understand the people at the bottom.
+            AI is about to reshape every one of those systems. I think it's dangerous if the only
+            people building and securing it come from the top.</p>
+          <p><span class="why-label">THE NAME</span>
+            Kokoro (<span lang="ja">心</span>, "heart") is the AI in <em>Terminator Zero</em> that
+            isn't simply programmed to be good. It chooses to be. Its creator, Malcolm Lee, saw a
+            problem, worked to understand it, and built something for the greater good at great
+            cost to himself. That's the kind of builder I want to be.</p>
+          <p><span class="why-label">THE OBJECTIVE</span>
+            Become an AI security engineer who helps keep AI systems trustworthy: hard to hijack,
+            hard to turn against the people they serve. And one day, do that work at the frontier,
+            where these systems are built.</p>
+          <blockquote>"I am going to make it to the summit and then rain down peace, prosperity, and
+            innovation to all in the valley under me."</blockquote>
+        </div>
       </details>
     </section>
 
