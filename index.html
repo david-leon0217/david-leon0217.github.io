@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  David Leon — Portfolio
+  HOW THIS FILE IS ORGANIZED (top to bottom = top to bottom of the page):
+    1. <head>      → settings the visitor never sees (title, fonts, CSS link)
+    2. #boot       → the "system boot" intro overlay
+    3. <header>    → top navigation bar
+    4. #hero       → name + headline + buttons
+    5. #about      → short bio
+    6. #projects   → featured projects (hand-written cards)
+   6b. #roadmap    → the mission map (your roadmap, sector by sector)
+    7. #repos      → ALL public GitHub repos, loaded live by script.js
+    8. #experience → work history
+    9. #skills     → tools + certifications
+   10. #contact    → how to reach you
+   11. <footer>
+  To add a project: copy one <article class="project-card"> block in #projects.
+  ============================================================
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- SECURITY (SECURITY-REVIEW.md, SR-02): Content Security Policy.
+       The browser will only load scripts from this site, styles from this site + Google Fonts,
+       fonts from Google, and data from GitHub's API. Anything else (an injected script,
+       a rogue stylesheet) gets blocked. If you add a new outside service, add its domain here. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://api.github.com; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'; upgrade-insecure-requests">
+  <!-- Don't leak which page a visitor came from when they click out -->
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>David Leon — Network Operations, Incident Response &amp; Cybersecurity</title>
+  <meta name="description" content="Portfolio of David Leon: network operations professional moving into cybersecurity. Projects, home labs, and experience.">
+
+  <!-- Fonts from Google: Chakra Petch (headings), IBM Plex Sans (body), IBM Plex Mono (HUD text) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Our stylesheet: everything about how the page LOOKS lives here -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- ===== 2. BOOT OVERLAY (script.js plays it once, then hides it) ===== -->
+  <div id="boot" aria-hidden="true">
+    <div class="boot-inner">
+      <p class="boot-line" id="boot-text"></p>
+      <div class="boot-bar"><span id="boot-fill"></span></div>
+      <p class="boot-skip">click or press any key to skip</p>
+    </div>
+  </div>
+
+  <!-- ===== 3. HEADER / NAV ===== -->
+  <header class="site-header">
+    <a href="#hero" class="logo">D<span>/</span>L</a>
+
+    <!-- Each href="#something" jumps to the element with id="something" -->
+    <nav class="nav" aria-label="Main">
+      <a href="#projects">Projects</a>
+      <a href="#roadmap">Roadmap</a>
+      <a href="#repos">Repos</a>
+      <a href="#experience">Experience</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </nav>
+
+    <div class="hud-status" aria-hidden="true">
+      <span class="dot"></span> SYS ONLINE
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== 4. HERO ===== -->
+    <section id="hero" class="hero">
+      <p class="hud-label">// SUBJECT IDENTIFIED</p>
+      <h1>David Leon</h1>
+      <p class="hero-role">Network Operations <span class="sep">|</span> Incident Response <span class="sep">|</span> Cybersecurity</p>
+      <p class="hero-sub">
+        Two years owning P1/P2 incidents in a 24/7 enterprise NOC, working
+        critical outages from first alert to root cause under SLA pressure.
+        Now building security home labs and moving toward security operations.
+      </p>
+      <div class="hero-actions">
+        <a href="#projects" class="btn btn-primary">View projects</a>
+        <!-- Put your résumé in the same folder as this file, named resume.pdf -->
+        <a href="resume.pdf" class="btn btn-ghost" download>Download résumé</a>
+      </div>
+      <ul class="hero-meta">
+        <li>Long Island, NY</li>
+        <li>B.S. Cybersecurity, WGU</li>
+        <li>English / Spanish</li>
+      </ul>
+    </section>
+
+    <!-- ===== 5. ABOUT ===== -->
+    <section id="about" class="section reveal">
+      <h2 class="section-title"><span class="idx">01</span> About</h2>
+      <div class="panel">
+        <p>
+          I've spent my career in managed service provider environments, most
+          recently in a 24/7 NOC supporting 50+ enterprise clients. My day-to-day
+          was triaging alerts and taking network incidents from first alert to
+          root cause across Cisco, Fortinet, and Meraki firewalls, VPN tunnels,
+          BGP, and VLANs.
+        </p>
+        <p>
+          I hold a B.S. in Cybersecurity and Information Assurance along with
+          CCNA, Security+, CySA+, PenTest+, and SSCP. I'm now putting that into
+          practice with hands-on security labs, documented below.
+        </p>
+      </div>
+    </section>
+
+    <!-- ===== 6. FEATURED PROJECTS ===== -->
+    <section id="projects" class="section reveal">
+      <h2 class="section-title"><span class="idx">02</span> Featured projects</h2>
+
+      <div class="project-grid">
+
+        <article class="project-card">
+          <div class="card-top">
+            <span class="status">Complete</span>
+            <span class="room-id">SECTOR 00</span>
+          </div>
+          <h3>Security Review of This Site</h3>
+          <p>
+            Ran SAST and secret scanning on this portfolio, then found what the
+            scanners missed: a DOM-based XSS in the live repo feed. Proved it with a
+            working exploit, fixed it with input validation and safe DOM APIs,
+            added a Content Security Policy, and wrote a custom Semgrep rule so the
+            pipeline now blocks any deploy that reintroduces it.
+          </p>
+          <ul class="tags">
+            <li>Semgrep</li><li>gitleaks</li><li>XSS</li><li>CSP</li><li>GitHub Actions</li>
+          </ul>
+          <div class="card-links">
+            <a href="https://github.com/david-leon0217/david-leon0217.github.io/blob/main/SECURITY-REVIEW.md" target="_blank" rel="noopener">Read the report &rarr;</a>
+          </div>
+        </article>
+
+        <!-- ---------- PROJECT CARD (copy this whole <article> to add another) ---------- -->
+        <article class="project-card">
+          <div class="card-top">
+            <span class="status status-active">In progress</span>
+            <span class="room-id">SECTOR 01</span>
+          </div>
+          <h3>Wazuh SIEM Home Lab</h3>
+          <p>
+            A Wazuh manager running on VMware collects telemetry from a victim
+            VM. I run attack simulations against the victim, then build and tune
+            detections from what the SIEM sees.
+          </p>
+          <ul class="tags">
+            <li>Wazuh</li><li>VMware</li><li>Linux</li><li>MITRE ATT&amp;CK</li>
+          </ul>
+          <div class="card-links">
+            <!-- TODO: replace with the repo link once the lab repo is public -->
+            <a href="https://github.com/david-leon0217" target="_blank" rel="noopener">Repo &rarr;</a>
+          </div>
+        </article>
+        <!-- ---------- END PROJECT CARD ---------- -->
+
+        <article class="project-card">
+          <div class="card-top">
+            <span class="status">Complete</span>
+            <span class="room-id">SECTOR 02</span>
+          </div>
+          <h3>Subnet Calculator</h3>
+          <p>
+            A Python command-line tool that computes the subnet mask, network and
+            broadcast addresses, and usable host range for any IPv4 network, with
+            input validation and correct /31 and /32 handling.
+          </p>
+          <ul class="tags">
+            <li>Python</li><li>IPv4</li><li>CLI</li>
+          </ul>
+          <div class="card-links">
+            <a href="https://github.com/david-leon0217/subnet-calculator" target="_blank" rel="noopener">Repo &rarr;</a>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- ===== 6b. MISSION MAP (the roadmap) =====
+         How to update it as you progress:
+           - Each <li> has data-status="done", "active" or "planned". Change that word.
+           - The progress bar counts the <li> items automatically.
+           - To mark the sector you're working in: move the word "current" and aria-selected="true"
+             to that sector's button, and move "hidden" off its panel onto the old one. -->
+    <section id="roadmap" class="section reveal">
+      <h2 class="section-title"><span class="idx">03</span> Mission map</h2>
+      <p class="section-note">Where I'm headed: AI security engineering. Testing AI systems and agents the way attackers will, and using AI to test code at a scale no one could by hand, while keeping a human on every finding. Every sector ends in public work.</p>
+
+      <div class="map-progress" aria-hidden="true">
+        <span class="map-label">MAP EXPLORED</span>
+        <div class="map-bar"><span id="map-fill"></span></div>
+        <span class="map-pct" id="map-pct">0%</span>
+      </div>
+
+      <div class="map map-5" role="tablist" aria-label="Roadmap sectors">
+        <button class="sector-btn current" role="tab" data-sector="0" data-status="active" aria-selected="true">
+          <span class="sector-num">00</span><span class="sector-name">Foundation</span><span class="sector-state">In progress</span>
+        </button>
+        <button class="sector-btn" role="tab" data-sector="1" data-status="planned" aria-selected="false">
+          <span class="sector-num">01</span><span class="sector-name">Python &amp; offense</span><span class="sector-state">Next</span>
+        </button>
+        <button class="sector-btn" role="tab" data-sector="2" data-status="planned" aria-selected="false">
+          <span class="sector-num">02</span><span class="sector-name">LLMs &amp; open source</span><span class="sector-state">Locked</span>
+        </button>
+        <button class="sector-btn" role="tab" data-sector="3" data-status="planned" aria-selected="false">
+          <span class="sector-num">03</span><span class="sector-name">Flagship research</span><span class="sector-state">Locked</span>
+        </button>
+        <button class="sector-btn" role="tab" data-sector="4" data-status="planned" aria-selected="false">
+          <span class="sector-num">04</span><span class="sector-name">Apply</span><span class="sector-state">Locked</span>
+        </button>
+      </div>
+
+      <!-- SECTOR 00 -->
+      <div class="sector-panel panel" id="sector-0" role="tabpanel">
+        <p class="sector-goal"><strong>Objective:</strong> the base everything else stands on: networking, incident response, and security fundamentals, proven in public.</p>
+        <ul class="items">
+          <li data-status="done">B.S. Cybersecurity &amp; Information Assurance (WGU)</li>
+          <li data-status="done">CCNA, Security+, CySA+, PenTest+, SSCP</li>
+          <li data-status="done">Two years owning P1/P2 network incidents in a 24/7 NOC</li>
+          <li data-status="done">Subnet calculator in Python, published on GitHub</li>
+          <li data-status="done">Security review of this site: SAST, secret scanning, a proven XSS fixed, scan-gated deploys</li>
+          <li data-status="active">Wazuh SIEM home lab: monitor a victim VM, simulate attacks, write detections</li>
+        </ul>
+        <p class="gate"><span>DOOR OPENS WHEN</span> the SIEM lab is public with its detections written up.</p>
+      </div>
+
+      <!-- SECTOR 01 -->
+      <div class="sector-panel panel" id="sector-1" role="tabpanel" hidden>
+        <p class="sector-goal"><strong>Objective:</strong> write real Python without a tutorial, and learn how web apps and LLM apps actually get broken. <em>Months 0–3.</em></p>
+        <ul class="items">
+          <li data-status="planned">Harvard CS50P: all 9 problem sets and the final project</li>
+          <li data-status="planned">Ship a security tool every two weeks: an SSH log parser that flags brute-force attempts, a config backup-and-diff tool, an OAuth/JWT validator against a local identity server</li>
+          <li data-status="planned">30+ PortSwigger Web Security Academy labs, including the full LLM attacks set and authentication, OAuth and JWT</li>
+          <li data-status="planned">AI red-teaming reps: Gandalf, then Gray Swan's weekly Proving Ground challenges</li>
+        </ul>
+        <p class="gate"><span>DOOR OPENS WHEN</span> I can write a 150-line Python tool without a tutorial and explain three ways JWTs get broken.</p>
+      </div>
+
+      <!-- SECTOR 02 -->
+      <div class="sector-panel panel" id="sector-2" role="tabpanel" hidden>
+        <p class="sector-goal"><strong>Objective:</strong> understand how LLMs work from the inside, and contribute to the tools that attack them. <em>Months 3–6.</em></p>
+        <ul class="items">
+          <li data-status="planned">Karpathy's Zero to Hero: backpropagation, building GPT, and the tokenizer, coding along with each</li>
+          <li data-status="planned">Merged pull requests to an open-source LLM attack tool: garak, PyRIT or promptfoo</li>
+          <li data-status="planned">Reproduce one published prompt-injection or jailbreak result on local models, and report what held up</li>
+          <li data-status="planned">One vulnerability found and disclosed responsibly, written up in depth</li>
+        </ul>
+        <p class="gate"><span>DOOR OPENS WHEN</span> one PR is merged, one replication is published, and I can explain attention and tokenization in my own words.</p>
+      </div>
+
+      <!-- SECTOR 03 -->
+      <div class="sector-panel panel" id="sector-3" role="tabpanel" hidden>
+        <p class="sector-goal"><strong>Objective:</strong> one original study where my network background is the edge. <em>Months 6–10.</em></p>
+        <ul class="items">
+          <li data-status="planned">Research question: how exploitable are AI agents to prompt injection through tool outputs (MCP servers), and which defenses actually hold?</li>
+          <li data-status="planned">An open-source test harness that runs attacks at scale against local and hosted models</li>
+          <li data-status="planned">Results as attack success rates over stated trials with confidence intervals, testing at least two defenses</li>
+          <li data-status="planned">A published write-up, reviewed by people in the AI security community before release</li>
+        </ul>
+        <p class="gate"><span>DOOR OPENS WHEN</span> the write-up is something I can defend for 45 minutes, failures included.</p>
+      </div>
+
+      <!-- SECTOR 04 -->
+      <div class="sector-panel panel" id="sector-4" role="tabpanel" hidden>
+        <p class="sector-goal"><strong>Objective:</strong> turn the work into offers. <em>Months 9–12.</em></p>
+        <ul class="items">
+          <li data-status="planned">Apply to AI security research fellowships and AI security engineering roles</li>
+          <li data-status="planned">References who have seen my security and research work firsthand</li>
+          <li data-status="planned">Timed Python coding practice and a 20-minute walkthrough of the flagship study</li>
+        </ul>
+        <p class="gate"><span>END STATE</span> AI security engineering: red-teaming AI systems and securing the agents and infrastructure they run on.</p>
+      </div>
+
+      <details class="why-box">
+        <summary>Why this direction</summary>
+        <ul>
+          <li>AI now finds vulnerabilities faster than teams can process them; vulnerability reports are running well above forecast. The bottleneck has moved to people who can verify, chain and fix what AI surfaces (<a href="https://darkreading.com/cybersecurity-operations/ai-decline-confidence-autonomous-penetration-testing" target="_blank" rel="noopener">Dark Reading</a>).</li>
+          <li>AI skills appear in about 28.5% of cybersecurity postings, and hands-on experience with AI agents is the most-cited skills gap among security leaders (<a href="https://siliconangle.com/2026/08/20/ai-skills-in-cybersecurity-job-postings-doubled-as-junior-hiring-stalls/" target="_blank" rel="noopener">AI Workforce Consortium via SiliconANGLE</a>).</li>
+          <li>Attacks on agent tooling are already live, like the August 2026 campaign that slipped poisoned MCP servers into public repositories (<a href="https://labs.cloudsecurityalliance.org/research/csa-research-note-deadbugz-mcp-supply-chain-20260830-csa-sty/" target="_blank" rel="noopener">Cloud Security Alliance</a>).</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- ===== 7. LIVE GITHUB REPOS (filled in by script.js) ===== -->
+    <section id="repos" class="section reveal">
+      <h2 class="section-title"><span class="idx">04</span> All repositories</h2>
+      <p class="section-note">Pulled live from <a href="https://github.com/david-leon0217" target="_blank" rel="noopener">github.com/david-leon0217</a>.</p>
+
+      <!-- Filter buttons get created here by script.js, one per language -->
+      <div class="filters" id="repo-filters" role="group" aria-label="Filter by language"></div>
+
+      <!-- Repo cards get created here by script.js -->
+      <div class="repo-grid" id="repo-grid">
+        <p class="loading">Scanning repositories…</p>
+      </div>
+    </section>
+
+    <!-- ===== 8. EXPERIENCE ===== -->
+    <section id="experience" class="section reveal">
+      <h2 class="section-title"><span class="idx">05</span> Experience</h2>
+
+      <ol class="timeline">
+        <li class="timeline-item">
+          <p class="when">May 2024 – Jun 2026</p>
+          <h3>Specialist, Incident ITS Network Operations</h3>
+          <p class="where">Netrix Global (formerly Ricoh USA) · Commack, NY</p>
+          <p>Owned alert response and P1/P2 incidents across 50+ enterprise client accounts in a 24/7 NOC, troubleshooting VPN tunnels, firewall rule sets, BGP, and VLANs through to root cause.</p>
+        </li>
+        <li class="timeline-item">
+          <p class="when">Oct 2022 – Feb 2024</p>
+          <h3>IT Support Analyst, Level II (Contract)</h3>
+          <p class="where">ICCS &amp; Co. LLC · Remote</p>
+          <p>Handled escalated incidents for executive and VIP clients and built out the ConnectWise knowledge base for network troubleshooting and escalation.</p>
+        </li>
+        <li class="timeline-item">
+          <p class="when">Apr 2021 – Jan 2022</p>
+          <h3>Service Desk Analyst, Associate</h3>
+          <p class="where">Allscripts · Melville, NY</p>
+          <p>Resolved Tier-1 clinical IT issues and handled Active Directory provisioning, MFA enrollment, and SSO troubleshooting.</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== 9. SKILLS + CERTS ===== -->
+    <section id="skills" class="section reveal">
+      <h2 class="section-title"><span class="idx">06</span> Skills &amp; certifications</h2>
+
+      <div class="skills-layout">
+        <div class="panel">
+          <h3 class="panel-title">Networking</h3>
+          <ul class="tags">
+            <li>Cisco</li><li>Juniper</li><li>Palo Alto</li><li>Fortinet</li><li>Meraki</li><li>F5</li>
+            <li>BGP</li><li>OSPF</li><li>VLANs</li><li>VPN</li><li>ACLs</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">Operations &amp; tooling</h3>
+          <ul class="tags">
+            <li>LogicMonitor</li><li>ServiceNow</li><li>ConnectWise</li><li>VMware</li><li>NetApp</li>
+            <li>Wireshark</li><li>Nmap</li><li>Active Directory</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3 class="panel-title">Security &amp; scripting</h3>
+          <ul class="tags">
+            <li>Wazuh (lab)</li><li>MITRE ATT&amp;CK</li><li>NIST CSF</li>
+            <li>Python</li><li>Bash</li><li>PowerShell</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Each cert is an "energy tank" -->
+      <h3 class="panel-title certs-title">Certifications</h3>
+      <ul class="cert-list">
+        <li class="cert"><span class="tank"></span>CompTIA PenTest+</li>
+        <li class="cert"><span class="tank"></span>CompTIA CySA+</li>
+        <li class="cert"><span class="tank"></span>CompTIA Security+</li>
+        <li class="cert"><span class="tank"></span>ISC2 SSCP</li>
+        <li class="cert"><span class="tank"></span>Cisco CCNA</li>
+        <li class="cert"><span class="tank"></span>CompTIA Network+</li>
+        <li class="cert"><span class="tank"></span>ITIL 4 Foundation</li>
+        <li class="cert"><span class="tank"></span>LPI Linux Essentials</li>
+      </ul>
+    </section>
+
+    <!-- ===== 10. CONTACT ===== -->
+    <section id="contact" class="section reveal">
+      <h2 class="section-title"><span class="idx">07</span> Contact</h2>
+      <div class="panel contact-panel">
+        <p>Open to network operations and security roles in the NY area or relocation.</p>
+        <div class="contact-links">
+          <a href="mailto:dleon217@hotmail.com" class="btn btn-primary">dleon217@hotmail.com</a>
+          <a href="https://www.linkedin.com/in/david-leon-a2a877186" class="btn btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/david-leon0217" class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== 11. FOOTER ===== -->
+  <footer class="site-footer">
+    <p>© <span id="year"></span> David Leon · Built with HTML, CSS &amp; JavaScript · Hosted on GitHub Pages</p>
+  </footer>
+
+  <!-- JavaScript goes last so the page content exists before the script runs -->
+  <script src="script.js"></script>
+</body>
+</html>

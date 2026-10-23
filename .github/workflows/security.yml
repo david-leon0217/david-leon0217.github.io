@@ -1,0 +1,72 @@
+# Scan, then deploy.
+# Every push to main runs a secret scan and a SAST scan. The site is published to
+# GitHub Pages ONLY if both pass, so nothing unscanned ever goes public.
+# Pull requests get scanned but never deployed.
+
+name: Security scan and deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: read            # least privilege by default; the deploy job asks for more
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # full history, so a key deleted in a later commit still gets caught
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    container: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Semgrep
+        run: >
+          semgrep scan
+          --config .semgrep/rules.yml
+          --config p/javascript
+          --config p/xss
+          --config p/secrets
+          --metrics=off
+          --error
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: [secrets, sast]  # the gate: both scans must pass first
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Collect only the public site files
+        run: |
+          mkdir _site
+          cp index.html style.css script.js _site/
+          if [ -f resume.pdf ]; then cp resume.pdf _site/; fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

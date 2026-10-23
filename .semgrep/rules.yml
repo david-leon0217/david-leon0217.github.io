@@ -1,0 +1,28 @@
+# Custom Semgrep rules for this site.
+# Run locally:  semgrep scan --config .semgrep/rules.yml .
+rules:
+  - id: innerhtml-with-interpolated-data
+    message: >
+      Data is being inserted into innerHTML through a template literal. If any
+      of that data comes from outside the page (an API, the URL, a form), it can
+      inject HTML or script (DOM XSS). Build elements with createElement and set
+      text with textContent, or validate the value first.
+    severity: WARNING
+    languages: [javascript]
+    metadata:
+      cwe: "CWE-79: Improper Neutralization of Input During Web Page Generation (XSS)"
+      owasp: "A03:2021 Injection"
+    pattern-either:
+      - pattern: $EL.innerHTML = `...${$X}...`
+      - pattern: $EL.innerHTML += `...${$X}...`
+
+  - id: anchor-href-from-external-data
+    message: >
+      A link's href is set from data that came from outside the page. Check that
+      it starts with the scheme and host you expect, so a javascript: or
+      look-alike URL can't slip in.
+    severity: INFO
+    languages: [javascript]
+    metadata:
+      cwe: "CWE-20: Improper Input Validation"
+    pattern: $A.href = $OBJ.$FIELD
